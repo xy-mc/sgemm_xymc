@@ -13,9 +13,10 @@ void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& di
 int main() {
     // 设置矩阵维度
     std::vector<MatrixDims> test_cases = {
-        {1024, 1024, 1024},  // 小矩阵
-        {2048, 2048, 2048},  // 中等矩阵
-        {4096, 4096, 4096}   // 大矩阵
+        {128, 128, 128},
+        // {1024, 1024, 1024},
+        // {2048, 2048, 2048},
+        // {4096, 4096, 4096}
     };
 
     // 测试每个维度
@@ -25,36 +26,39 @@ int main() {
                   << dims.K << "x" << dims.N << "\n"
                   << "========================================\n";
 
+        // 创建并初始化矩阵数据
+        MatrixData data(dims);
+        data.initialize();
+        data.copyToDevice();
+
         // 运行所有版本的SGEMM
         std::vector<PerformanceResult> results;
         
-        results.push_back(runPerformanceTest(sgemm_v0_global_memory, dims, 100, "Global Memory"));
-        // results.push_back(runPerformanceTest(sgemm_v1_shared_memory, dims, 100, "Shared Memory"));
-        // results.push_back(runPerformanceTest(sgemm_v2_tiling, dims, 100, "Tiling"));
-        // results.push_back(runPerformanceTest(sgemm_v3_vectorized, dims, 100, "Vectorized"));
-        // results.push_back(runPerformanceTest(sgemm_v4_register_blocking, dims, 100, "Register Blocking"));
-        results.push_back(runPerformanceTest(sgemm_cublas, dims, 100, "cuBLAS"));
+        results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 100, "Global Memory"));
+        results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 100, "Shared Memory"));
+        // results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 100, "Tiling"));
+        // results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 100, "Vectorized"));
+        // results.push_back(runPerformanceTest(sgemm_v4_register_blocking, data, 100, "Register Blocking"));
+        results.push_back(runPerformanceTest(sgemm_cublas, data, 100, "cuBLAS"));
 
         // 打印所有结果
         for (const auto& result : results) {
             printPerformanceResult(result);
         }
 
-        // 如果是2048x2048的矩阵，进行误差测试
-        if (dims.M == 2048 && dims.N == 2048 && dims.K == 2048) {
-            std::cout << "\nError Analysis (compared with cuBLAS):\n"
-                      << "========================================\n";
-            
-            std::vector<ErrorResult> error_results;
-            error_results.push_back(runErrorTest(sgemm_v0_global_memory, dims, "Global Memory"));
-            // error_results.push_back(runErrorTest(sgemm_v1_shared_memory, dims, "Shared Memory"));
-            // error_results.push_back(runErrorTest(sgemm_v2_tiling, dims, "Tiling"));
-            // error_results.push_back(runErrorTest(sgemm_v3_vectorized, dims, "Vectorized"));
-            // error_results.push_back(runErrorTest(sgemm_v4_register_blocking, dims, "Register Blocking"));
+        // 进行误差测试
+        std::cout << "\nError Analysis (compared with cuBLAS):\n"
+                  << "========================================\n";
+        
+        std::vector<ErrorResult> error_results;
+        error_results.push_back(runErrorTest(sgemm_v0_global_memory, data, "Global Memory"));
+        error_results.push_back(runErrorTest(sgemm_v1_shared_memory, data, "Shared Memory"));
+        // error_results.push_back(runErrorTest(sgemm_v2_tiling, data, "Tiling"));
+        // error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
+        // error_results.push_back(runErrorTest(sgemm_v4_register_blocking, data, "Register Blocking"));
 
-            for (const auto& result : error_results) {
-                printErrorResult(result);
-            }
+        for (const auto& result : error_results) {
+            printErrorResult(result);
         }
     }
 

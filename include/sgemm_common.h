@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <vector>
@@ -9,7 +10,7 @@
 // 性能测试结果结构
 struct PerformanceResult {
     float gflops;
-    float bandwidth;
+    float error;
     float time_ms;
     std::string version;
 };
@@ -25,9 +26,21 @@ struct ErrorResult {
 
 // 矩阵维度结构
 struct MatrixDims {
-    int M;  // 矩阵A的行数
-    int N;  // 矩阵B的列数
-    int K;  // 矩阵A的列数/矩阵B的行数
+    int M, N, K;
+};
+
+// 内存管理结构体
+struct MatrixData {
+    float *d_A, *d_B, *d_C;  // 设备内存
+    float *h_A, *h_B, *h_C;  // 主机内存
+    size_t size_A, size_B, size_C;  // 内存大小
+    MatrixDims dims;  // 矩阵维度
+
+    MatrixData(const MatrixDims& dims);
+    ~MatrixData();
+    void initialize();  // 初始化矩阵数据
+    void copyToDevice();  // 复制数据到设备
+    void copyToHost();  // 复制数据到主机
 };
 
 // 初始化矩阵
@@ -42,17 +55,15 @@ float calculateTheoreticalGflops(const MatrixDims& dims, float time_ms);
 // 运行性能测试
 PerformanceResult runPerformanceTest(
     void (*sgemm_func)(float*, const float*, const float*, const MatrixDims&),
-    const MatrixDims& dims,
-    int num_iterations = 100,
-    const std::string& version = "unknown"
-);
+    MatrixData& data,
+    int num_iterations,
+    const std::string& version);
 
 // 运行误差测试
 ErrorResult runErrorTest(
     void (*sgemm_func)(float*, const float*, const float*, const MatrixDims&),
-    const MatrixDims& dims,
-    const std::string& version = "unknown"
-);
+    MatrixData& data,
+    const std::string& version);
 
 // 打印性能结果
 void printPerformanceResult(const PerformanceResult& result);
