@@ -1,0 +1,86 @@
+# Build directories
+build/
+cmake-build-*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+sgemm_benchmark
+
+# CUDA specific
+*.cubin
+*.ptx
+*.fatbin
+*.cudafe1.c
+*.cudafe2.c
+*.cudafe1.cpp
+*.cudafe2.cpp
+*.cudafe1.gpu
+*.cudafe2.gpu
+*.cudafe1.stub.c
+*.cudafe2.stub.c
+*.cudafe1.stub.cpp
+*.cudafe2.stub.cpp
+*.cudafe1.decl.h
+*.cudafe2.decl.h
+*.cudafe1.h
+*.cudafe2.h
+*.cudafe1.cu.c
+*.cudafe2.cu.c
+*.cudafe1.cu.cpp
+*.cudafe2.cu.cpp
+*.cudafe1.cu.gpu
+*.cudafe2.cu.gpu
+*.cudafe1.cu.stub.c
+*.cudafe2.cu.stub.c
+*.cudafe1.cu.stub.cpp
+*.cudafe2.cu.stub.cpp
+*.cudafe1.cu.decl.h
+*.cudafe2.cu.decl.h
+*.cudafe1.cu.h
+*.cudafe2.cu.h
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

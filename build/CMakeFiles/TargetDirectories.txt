@@ -1,0 +1,3 @@
+/home/luoqiang/xymc/sgemm_xymc/build/CMakeFiles/sgemm_benchmark.dir
+/home/luoqiang/xymc/sgemm_xymc/build/CMakeFiles/edit_cache.dir
+/home/luoqiang/xymc/sgemm_xymc/build/CMakeFiles/rebuild_cache.dir
