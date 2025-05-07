@@ -4,12 +4,22 @@
 #include <cublas_v2.h>
 #include <vector>
 #include <string>
+#include <cmath>
 
 // 性能测试结果结构
 struct PerformanceResult {
     float gflops;
     float bandwidth;
     float time_ms;
+    std::string version;
+};
+
+// 误差测试结果结构
+struct ErrorResult {
+    float max_abs_error;
+    float mean_abs_error;
+    float max_rel_error;
+    float mean_rel_error;
     std::string version;
 };
 
@@ -37,5 +47,15 @@ PerformanceResult runPerformanceTest(
     const std::string& version = "unknown"
 );
 
+// 运行误差测试
+ErrorResult runErrorTest(
+    void (*sgemm_func)(float*, const float*, const float*, const MatrixDims&),
+    const MatrixDims& dims,
+    const std::string& version = "unknown"
+);
+
 // 打印性能结果
-void printPerformanceResult(const PerformanceResult& result); 
+void printPerformanceResult(const PerformanceResult& result);
+
+// 打印误差结果
+void printErrorResult(const ErrorResult& result); 

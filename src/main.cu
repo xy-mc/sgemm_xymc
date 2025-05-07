@@ -39,6 +39,23 @@ int main() {
         for (const auto& result : results) {
             printPerformanceResult(result);
         }
+
+        // 如果是2048x2048的矩阵，进行误差测试
+        if (dims.M == 2048 && dims.N == 2048 && dims.K == 2048) {
+            std::cout << "\nError Analysis (compared with cuBLAS):\n"
+                      << "========================================\n";
+            
+            std::vector<ErrorResult> error_results;
+            error_results.push_back(runErrorTest(sgemm_v0_global_memory, dims, "Global Memory"));
+            // error_results.push_back(runErrorTest(sgemm_v1_shared_memory, dims, "Shared Memory"));
+            // error_results.push_back(runErrorTest(sgemm_v2_tiling, dims, "Tiling"));
+            // error_results.push_back(runErrorTest(sgemm_v3_vectorized, dims, "Vectorized"));
+            // error_results.push_back(runErrorTest(sgemm_v4_register_blocking, dims, "Register Blocking"));
+
+            for (const auto& result : error_results) {
+                printErrorResult(result);
+            }
+        }
     }
 
     return 0;
