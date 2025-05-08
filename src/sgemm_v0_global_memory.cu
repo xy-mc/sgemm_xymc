@@ -26,4 +26,9 @@ void sgemm_v0_global_memory(float* C, const float* A, const float* B, const Matr
     );
     
     sgemm_kernel<<<gridDim, blockDim>>>(C, A, B, dims.M, dims.N, dims.K);
+
+    cudaError_t error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        printf("CUDA error: %s\n", cudaGetErrorString(error));
+    }
 } 

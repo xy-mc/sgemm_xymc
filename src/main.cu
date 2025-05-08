@@ -13,10 +13,9 @@ void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& di
 int main() {
     // 设置矩阵维度
     std::vector<MatrixDims> test_cases = {
-        {128, 128, 128},
-        // {1024, 1024, 1024},
-        // {2048, 2048, 2048},
-        // {4096, 4096, 4096}
+        {1024, 1024, 1024},
+        {2048, 2048, 2048},
+        {4096, 4096, 4096}
     };
 
     // 测试每个维度
@@ -34,12 +33,12 @@ int main() {
         // 运行所有版本的SGEMM
         std::vector<PerformanceResult> results;
         
-        results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 100, "Global Memory"));
-        results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 100, "Shared Memory"));
+        results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 5, "Global Memory"));
+        results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 5, "Shared Memory"));
         // results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 100, "Tiling"));
         // results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 100, "Vectorized"));
         // results.push_back(runPerformanceTest(sgemm_v4_register_blocking, data, 100, "Register Blocking"));
-        results.push_back(runPerformanceTest(sgemm_cublas, data, 100, "cuBLAS"));
+        results.push_back(runPerformanceTest(sgemm_cublas, data, 5, "cuBLAS"));
 
         // 打印所有结果
         for (const auto& result : results) {
