@@ -10,11 +10,11 @@ __global__ void sgemm_shared_memory_kernel(
     __shared__ float A_shared[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ float B_shared[BLOCK_SIZE][BLOCK_SIZE];
 
-    const int tx = threadIdx.x;
-    const int ty = threadIdx.y;
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
     
-    const int row = blockIdx.y * blockDim.y + ty;
-    const int col = blockIdx.x * blockDim.x + tx;
+    int row = blockIdx.y * blockDim.y + ty;
+    int col = blockIdx.x * blockDim.x + tx;
     
     float sum = 0.0f;
     

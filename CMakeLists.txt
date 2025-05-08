@@ -14,8 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 设置调试标志
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -G -g -O0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
 # 添加头文件目录
@@ -26,7 +26,7 @@ set(SOURCES
     src/main.cu
     src/sgemm_v0_global_memory.cu
     src/sgemm_v1_shared_memory.cu
-    # src/sgemm_v2_tiling.cu
+    src/sgemm_v2_tiling.cu
     # src/sgemm_v3_vectorized.cu
     # src/sgemm_v4_register_blocking.cu
     src/sgemm_cublas.cu
