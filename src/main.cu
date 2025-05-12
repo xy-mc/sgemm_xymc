@@ -72,7 +72,7 @@ int main() {
         results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 5, "Global Memory"));
         results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 5, "Shared Memory"));
         results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 5, "Tiling"));
-        // results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 100, "Vectorized"));
+        results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 5, "Vectorized"));
         // results.push_back(runPerformanceTest(sgemm_v4_register_blocking, data, 100, "Register Blocking"));
         results.push_back(runPerformanceTest(sgemm_cublas, data, 5, "cuBLAS"));
 
@@ -89,7 +89,7 @@ int main() {
         error_results.push_back(runErrorTest(sgemm_v0_global_memory, data, "Global Memory"));
         error_results.push_back(runErrorTest(sgemm_v1_shared_memory, data, "Shared Memory"));
         error_results.push_back(runErrorTest(sgemm_v2_tiling, data, "Tiling"));
-        // error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
+        error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
         // error_results.push_back(runErrorTest(sgemm_v4_register_blocking, data, "Register Blocking"));
 
         for (const auto& result : error_results) {
