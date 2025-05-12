@@ -30,7 +30,7 @@ set(SOURCES
     src/sgemm_v1_shared_memory.cu
     src/sgemm_v2_tiling.cu
     src/sgemm_v3_vectorized.cu
-    # src/sgemm_v4_register_blocking.cu
+    src/sgemm_v4_register.cu
     src/sgemm_cublas.cu
     src/utils.cu
 )
