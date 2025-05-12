@@ -9,7 +9,7 @@ void sgemm_v0_global_memory(float* C, const float* A, const float* B, const Matr
 void sgemm_v1_shared_memory(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v2_tiling(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v3_vectorized(float* C, const float* A, const float* B, const MatrixDims& dims);
-void sgemm_v4_register_blocking(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v4_register(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 // 运行cuBLAS并保存结果
@@ -69,11 +69,11 @@ int main() {
         // 运行所有版本的SGEMM
         std::vector<PerformanceResult> results;
         
-        results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 5, "Global Memory"));
-        results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 5, "Shared Memory"));
-        results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 5, "Tiling"));
-        // results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 100, "Vectorized"));
-        // results.push_back(runPerformanceTest(sgemm_v4_register_blocking, data, 100, "Register Blocking"));
+        // results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 5, "Global Memory"));
+        // results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 5, "Shared Memory"));
+        // results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 5, "Tiling"));
+        results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 5, "Vectorized"));
+        results.push_back(runPerformanceTest(sgemm_v4_register, data, 5, "Register"));
         results.push_back(runPerformanceTest(sgemm_cublas, data, 5, "cuBLAS"));
 
         // 打印所有结果
@@ -86,17 +86,17 @@ int main() {
                   << "========================================\n";
         
         std::vector<ErrorResult> error_results;
-        error_results.push_back(runErrorTest(sgemm_v0_global_memory, data, "Global Memory"));
-        error_results.push_back(runErrorTest(sgemm_v1_shared_memory, data, "Shared Memory"));
-        error_results.push_back(runErrorTest(sgemm_v2_tiling, data, "Tiling"));
-        // error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
-        // error_results.push_back(runErrorTest(sgemm_v4_register_blocking, data, "Register Blocking"));
+        // error_results.push_back(runErrorTest(sgemm_v0_global_memory, data, "Global Memory"));
+        // error_results.push_back(runErrorTest(sgemm_v1_shared_memory, data, "Shared Memory"));
+        // error_results.push_back(runErrorTest(sgemm_v2_tiling, data, "Tiling"));
+        error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
+        error_results.push_back(runErrorTest(sgemm_v4_register, data, "Register"));
 
         for (const auto& result : error_results) {
             printErrorResult(result);
         }
 
-        // 输出最后一个计算结果到文件
+        // // 输出最后一个计算结果到文件
         // data.copyToHost();
         // std::string last_result_file = "last_result_" + std::to_string(dims.M) + "x" + std::to_string(dims.N) + ".txt";
         // write_matrix_to_file(last_result_file, data.h_C, dims.M, dims.N);

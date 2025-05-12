@@ -19,10 +19,13 @@ __global__ void sgemm_tiling_kernel(
     
     float sum[TILE_SIZE][TILE_SIZE] = {0.0f};
     
+    #pragma unroll
     for (int s = 0; s < K; s += STEP) {
 
+        // #pragma unroll
         for (int i = 0; i < TILE_SIZE; i++) {
 
+            // #pragma unroll
             for (int j = 0; j < TILE_SIZE; j++) {
 
                 A_shared[ty + i * BLOCK_SIZE][tx + j * BLOCK_SIZE] = 
@@ -33,8 +36,11 @@ __global__ void sgemm_tiling_kernel(
             }
         }
         __syncthreads();
+
+        // #pragma unroll
         for (int i = 0; i < TILE_SIZE; i++) {
 
+            // #pragma unroll
             for (int j = 0; j < TILE_SIZE; j++) {
 
                 for (int k = 0; k < STEP; k++) {
@@ -45,8 +51,10 @@ __global__ void sgemm_tiling_kernel(
         __syncthreads();
     }
 
+    // #pragma unroll
     for (int i = 0; i < TILE_SIZE; i++) {
 
+        // #pragma unroll
         for (int j = 0; j < TILE_SIZE; j++) {
 
             C[(blockIdx.y * STEP + ty + i * BLOCK_SIZE) * N + blockIdx.x * STEP + tx + j * BLOCK_SIZE] = sum[i][j];
