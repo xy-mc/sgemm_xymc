@@ -10,7 +10,9 @@ void sgemm_v1_shared_memory(float* C, const float* A, const float* B, const Matr
 void sgemm_v2_tiling(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v3_vectorized(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v4_register(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& dims);
+
 
 // 运行cuBLAS并保存结果
 void run_cublas_and_save_result(MatrixData& data) {
@@ -52,6 +54,8 @@ int main() {
         {1024, 1024, 1024},
         {2048, 2048, 2048},
         {4096, 4096, 4096}
+        // {8192, 8192, 8192},
+        // {16384, 16384, 16384}
     };
 
     // 测试每个维度
@@ -74,6 +78,7 @@ int main() {
         // results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 5, "Tiling"));
         results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 5, "Vectorized"));
         results.push_back(runPerformanceTest(sgemm_v4_register, data, 5, "Register"));
+        results.push_back(runPerformanceTest(sgemm_v5_transpose, data, 5, "Transpose"));
         results.push_back(runPerformanceTest(sgemm_cublas, data, 5, "cuBLAS"));
 
         // 打印所有结果
@@ -91,6 +96,7 @@ int main() {
         // error_results.push_back(runErrorTest(sgemm_v2_tiling, data, "Tiling"));
         error_results.push_back(runErrorTest(sgemm_v3_vectorized, data, "Vectorized"));
         error_results.push_back(runErrorTest(sgemm_v4_register, data, "Register"));
+        error_results.push_back(runErrorTest(sgemm_v5_transpose, data, "Transpose"));
 
         for (const auto& result : error_results) {
             printErrorResult(result);
