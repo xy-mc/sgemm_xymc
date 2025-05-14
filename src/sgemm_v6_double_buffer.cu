@@ -9,7 +9,7 @@
 
 // constexpr int STEP = BLOCK_SIZE * TILE_SIZE;
 
-__global__ void sgemm_transpose_kernel(
+__global__ void sgemm_double_buffer_kernel(
     float* C,
     const float* A,
     const float* B,
@@ -28,8 +28,8 @@ __global__ void sgemm_transpose_kernel(
     const int tx = threadIdx.x;
     const int ty = threadIdx.y;
 
-    __shared__ float A_shared[BK][BM];
-    __shared__ float B_shared[BK][BN];
+    __shared__ float A_shared[2][BK][BM];
+    __shared__ float B_shared[2][BK][BN];
     
     float sum[TM][TN] = {0.0f};
     
@@ -44,47 +44,85 @@ __global__ void sgemm_transpose_kernel(
 
     float global_to_reg_A[4];
     // float global_to_reg_B[4];
-    
+
     float reg_A[TM];
     float reg_B[TN];
 
+    {
+        FLOAT4(global_to_reg_A[0]) = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k, K)]);
+
+        A_shared[0][sx_k][sy_k] = global_to_reg_A[0];
+        A_shared[0][sx_k + 1][sy_k] = global_to_reg_A[1];
+        A_shared[0][sx_k + 2][sy_k] = global_to_reg_A[2];
+        A_shared[0][sx_k + 3][sy_k] = global_to_reg_A[3];
+
+        FLOAT4(B_shared[0][sy_n][sx_n])
+                = CONST_FLOAT4(B_start[OFFSET(sy_n, sx_n, N)]);
+        
+        __syncthreads();
+    }
+    
+    int choice = 0;
+
     #pragma unroll
-    for (int s = 0; s < K; s += BK) {
+    for (int s = BK; s < K; s += BK) {
 
         FLOAT4(global_to_reg_A[0]) = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k + s, K)]);
-
-        A_shared[sx_k][sy_k] = global_to_reg_A[0];
-        A_shared[sx_k + 1][sy_k] = global_to_reg_A[1];
-        A_shared[sx_k + 2][sy_k] = global_to_reg_A[2];
-        A_shared[sx_k + 3][sy_k] = global_to_reg_A[3];
-        
-        // FLOAT4(A_shared[sy_k][sx_k])
-        //         = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k + s, K)]);
-
-        FLOAT4(B_shared[sy_n][sx_n])
-                = CONST_FLOAT4(B_start[OFFSET(sy_n + s, sx_n, N)]);
             
-        __syncthreads();
-
         #pragma unroll
         for (int k = 0; k < BK; k++) {
 
-            FLOAT4(reg_A[0]) = FLOAT4(A_shared[k][ty * TM]);
-            FLOAT4(reg_A[4]) = FLOAT4(A_shared[k][ty * TM + 4]);
+            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][ty * TM]);
+            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][ty * TM + 4]);
 
-            FLOAT4(reg_B[0]) = FLOAT4(B_shared[k][tx * TN]);
-            FLOAT4(reg_B[4]) = FLOAT4(B_shared[k][tx * TN + 4]);
+            FLOAT4(reg_B[0]) = FLOAT4(B_shared[choice][k][tx * TN]);
+            FLOAT4(reg_B[4]) = FLOAT4(B_shared[choice][k][tx * TN + 4]);
 
+            #pragma unroll
             for (int i = 0; i < TM; i++) {
-                // reg_A[i] = A_shared[ty * TM + i][k];
+                #pragma unroll
                 for (int j = 0; j < TN; j++) {
-                    // sum[i][j] += A_shared[ty + i * BLOCK_SIZE][k] * B_shared[k][tx + j * BLOCK_SIZE];
+                   
                     sum[i][j] += reg_A[i] * reg_B[j];
                     
                 }
             }
         }
+
+        choice ^= 1;
+
+        A_shared[choice][sx_k][sy_k] = global_to_reg_A[0];
+        A_shared[choice][sx_k + 1][sy_k] = global_to_reg_A[1];
+        A_shared[choice][sx_k + 2][sy_k] = global_to_reg_A[2];
+        A_shared[choice][sx_k + 3][sy_k] = global_to_reg_A[3];
+
+        FLOAT4(B_shared[choice][sy_n][sx_n])
+                = CONST_FLOAT4(B_start[OFFSET(sy_n + s, sx_n, N)]);
+                
         __syncthreads();
+    }
+
+    {
+        #pragma unroll
+        for (int k = 0; k < BK; k++) {
+
+            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][ty * TM]);
+            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][ty * TM + 4]);
+
+            FLOAT4(reg_B[0]) = FLOAT4(B_shared[choice][k][tx * TN]);
+            FLOAT4(reg_B[4]) = FLOAT4(B_shared[choice][k][tx * TN + 4]);
+
+            #pragma unroll
+            for (int i = 0; i < TM; i++) {
+                
+                #pragma unroll
+                for (int j = 0; j < TN; j++) {
+                   
+                    sum[i][j] += reg_A[i] * reg_B[j];
+                    
+                }
+            }
+        }
     }
 
     float *C_start = C + by * BM * N + bx * BN;
@@ -92,19 +130,18 @@ __global__ void sgemm_transpose_kernel(
     #pragma unroll
     for (int i = 0; i < TM; i++) {
 
+        #pragma unroll
         for (int j = 0; j < TN; j += 4) {
 
             FLOAT4(C_start[OFFSET(ty * TM + i, tx * TN + j, N)])
                     = FLOAT4(sum[i][j]);
-                    
-            // C_start[OFFSET(ty + i * BLOCK_SIZE, tx + j * BLOCK_SIZE, N)]
-            //         = sum[i][j];
+
         }
     }
     
 }
 
-void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDims& dims) {
+void sgemm_v6_double_buffer(float* C, const float* A, const float* B, const MatrixDims& dims) {
     
     dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE);
 
@@ -113,7 +150,7 @@ void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDi
         (dims.M + blockDim.y - 1) / blockDim.y / 8
     );
     
-    sgemm_transpose_kernel<<<gridDim, blockDim>>>(C, A, B, dims.M, dims.N, dims.K);
+    sgemm_double_buffer_kernel<<<gridDim, blockDim>>>(C, A, B, dims.M, dims.N, dims.K);
     
     cudaError_t error = cudaGetLastError(); 
     if (error != cudaSuccess) {

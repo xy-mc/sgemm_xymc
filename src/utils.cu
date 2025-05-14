@@ -109,7 +109,7 @@ PerformanceResult runPerformanceTest(
 }
 
 void printPerformanceResult(const PerformanceResult& result) {
-    std::cout << std::fixed << std::setprecision(2);
+    std::cout << std::fixed << std::setprecision(6);
     std::cout << "Version: " << result.version << "\n"
               << "Time: " << result.time_ms << " ms\n"
               << "Performance: " << result.gflops << " GFLOPS\n"
