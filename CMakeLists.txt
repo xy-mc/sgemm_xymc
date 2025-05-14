@@ -33,6 +33,7 @@ set(SOURCES
     src/sgemm_v4_register.cu
     src/sgemm_v5_transpose.cu
     src/sgemm_v6_double_buffer.cu
+    src/sgemm_v7_bank_conflict.cu
     src/sgemm_cublas.cu
     src/utils.cu
 )

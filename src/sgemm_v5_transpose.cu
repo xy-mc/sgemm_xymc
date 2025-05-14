@@ -44,7 +44,6 @@ __global__ void sgemm_transpose_kernel(
 
     float global_to_reg_A[4];
     // float global_to_reg_B[4];
-    
     float reg_A[TM];
     float reg_B[TN];
 
@@ -69,11 +68,11 @@ __global__ void sgemm_transpose_kernel(
         #pragma unroll
         for (int k = 0; k < BK; k++) {
 
-            FLOAT4(reg_A[0]) = FLOAT4(A_shared[k][ty * TM]);
-            FLOAT4(reg_A[4]) = FLOAT4(A_shared[k][ty * TM + 4]);
+            FLOAT4(reg_A[0]) = FLOAT4(A_shared[k][ty * TM / 2]);
+            FLOAT4(reg_A[4]) = FLOAT4(A_shared[k][ty * TM / 2 + BM / 2]);
 
-            FLOAT4(reg_B[0]) = FLOAT4(B_shared[k][tx * TN]);
-            FLOAT4(reg_B[4]) = FLOAT4(B_shared[k][tx * TN + 4]);
+            FLOAT4(reg_B[0]) = FLOAT4(B_shared[k][tx * TN / 2]);
+            FLOAT4(reg_B[4]) = FLOAT4(B_shared[k][tx * TN / 2 + BN / 2]);
 
             for (int i = 0; i < TM; i++) {
                 // reg_A[i] = A_shared[ty * TM + i][k];
@@ -89,19 +88,32 @@ __global__ void sgemm_transpose_kernel(
 
     float *C_start = C + by * BM * N + bx * BN;
 
-    #pragma unroll
-    for (int i = 0; i < TM; i++) {
+    // #pragma unroll
+    // for (int i = 0; i < TM; i++) {
 
-        for (int j = 0; j < TN; j += 4) {
+    //     for (int j = 0; j < TN; j += 4) {
 
-            FLOAT4(C_start[OFFSET(ty * TM + i, tx * TN + j, N)])
-                    = FLOAT4(sum[i][j]);
+    //         FLOAT4(C_start[OFFSET(ty * TM + i, tx * TN + j, N)])
+    //                 = FLOAT4(sum[i][j]);
                     
-            // C_start[OFFSET(ty + i * BLOCK_SIZE, tx + j * BLOCK_SIZE, N)]
-            //         = sum[i][j];
-        }
+    //     }
+    // }
+
+    #pragma unroll
+    for (int i = 0; i < TM / 2; i++) {
+
+        FLOAT4(C_start[OFFSET(ty * TM / 2 + i, tx * TN / 2, N)])
+                = FLOAT4(sum[i][0]);
+
+        FLOAT4(C_start[OFFSET(ty * TM / 2 + i, tx * TN / 2 + BN / 2, N)])
+                = FLOAT4(sum[i][TN / 2]);
+
+        FLOAT4(C_start[OFFSET(ty * TM / 2 + i + BM / 2, tx * TN / 2, N)])
+                = FLOAT4(sum[i + TM / 2][0]);
+
+        FLOAT4(C_start[OFFSET(ty * TM / 2 + i + BM / 2, tx * TN / 2 + BN / 2, N)])
+                = FLOAT4(sum[i + TM / 2][TN / 2]);
     }
-    
 }
 
 void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDims& dims) {

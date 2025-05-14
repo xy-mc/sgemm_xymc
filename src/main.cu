@@ -12,6 +12,7 @@ void sgemm_v3_vectorized(float* C, const float* A, const float* B, const MatrixD
 void sgemm_v4_register(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v6_double_buffer(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v7_bank_conflict(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 
@@ -81,6 +82,7 @@ int main() {
         results.push_back(runPerformanceTest(sgemm_v4_register, data, 5, "Register"));
         results.push_back(runPerformanceTest(sgemm_v5_transpose, data, 5, "Transpose"));
         results.push_back(runPerformanceTest(sgemm_v6_double_buffer, data, 5, "Double Buffer"));
+        results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, 5, "Bank Conflict"));
         results.push_back(runPerformanceTest(sgemm_cublas, data, 5, "cuBLAS"));
 
         // 打印所有结果
@@ -100,6 +102,7 @@ int main() {
         error_results.push_back(runErrorTest(sgemm_v4_register, data, "Register"));
         error_results.push_back(runErrorTest(sgemm_v5_transpose, data, "Transpose"));
         error_results.push_back(runErrorTest(sgemm_v6_double_buffer, data, "Double Buffer"));
+        error_results.push_back(runErrorTest(sgemm_v7_bank_conflict, data, "Bank Conflict"));
         for (const auto& result : error_results) {
             printErrorResult(result);
         }
