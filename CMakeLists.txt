@@ -34,7 +34,9 @@ set(SOURCES
     src/sgemm_v5_transpose.cu
     src/sgemm_v6_double_buffer.cu
     src/sgemm_v7_bank_conflict.cu
+    src/sgemm_v8_tensor_core.cu
     src/sgemm_cublas.cu
+    src/sgemm_cublas_tensor_core.cu
     src/utils.cu
 )
 
@@ -42,7 +44,7 @@ set(SOURCES
 add_executable(sgemm_benchmark ${SOURCES})
 
 # 创建测试程序
-add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v1_shared_memory.cu)
+add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v8_tensor_core.cu)
 
 # 链接CUDA库
 target_link_libraries(sgemm_benchmark cublas cudart)

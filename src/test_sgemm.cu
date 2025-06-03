@@ -3,13 +3,13 @@
 #include <stdio.h>
 
 // 声明要测试的函数
-void sgemm_v1_shared_memory(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v8_tensor_core(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 int main() {
     printf("=== Starting CUDA SGEMM Test ===\n");
     
     // 设置测试矩阵维度
-    MatrixDims dims = {128, 128, 128};
+    MatrixDims dims = {1024, 1024, 1024};
     printf("Matrix dimensions: M=%d, N=%d, K=%d\n", dims.M, dims.N, dims.K);
     
     // 分配主机内存
@@ -49,7 +49,7 @@ int main() {
     
     printf("About to launch SGEMM kernel...\n");
     // 运行SGEMM
-    sgemm_v1_shared_memory(d_C, d_A, d_B, dims);
+    sgemm_v8_tensor_core(d_C, d_A, d_B, dims);
     
     // 检查错误
     cudaError_t error = cudaGetLastError();
