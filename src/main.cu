@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 
+#define num_test 1
 // 声明不同版本的SGEMM实现
 void sgemm_v0_global_memory(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v1_shared_memory(float* C, const float* A, const float* B, const MatrixDims& dims);
@@ -14,6 +15,8 @@ void sgemm_v5_transpose(float* C, const float* A, const float* B, const MatrixDi
 void sgemm_v6_double_buffer(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v7_bank_conflict(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v8_tensor_core(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v9_tensor_core_bank_conflict(float* C, const float* A, const float* B, const MatrixDims& dims);
+
 void sgemm_cublas(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_cublas_tensorcore(float* C, const float* A, const float* B, const MatrixDims& dims);
 
@@ -77,11 +80,11 @@ void write_matrix_to_file_tile(const std::string& filename, const float* matrix,
 int main() {
     // 设置矩阵维度
     std::vector<MatrixDims> test_cases = {
-        {1024, 1024, 1024},
+        // {1024, 1024, 1024},
         {2048, 2048, 2048},
-        {4096, 4096, 4096},
-        {8192, 8192, 8192},
-        {16384, 16384, 16384}
+        // {4096, 4096, 4096},
+        // {8192, 8192, 8192},
+        // {16384, 16384, 16384}
     };
 
     // 测试每个维度
@@ -99,17 +102,18 @@ int main() {
         // 运行所有版本的SGEMM
         std::vector<PerformanceResult> results;
         
-        // results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, 5, "Global Memory"));
-        // results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, 5, "Shared Memory"));
-        // results.push_back(runPerformanceTest(sgemm_v2_tiling, data, 5, "Tiling"));
-        // results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, 20, "Vectorized"));
-        // results.push_back(runPerformanceTest(sgemm_v4_register, data, 20, "Register"));
-        results.push_back(runPerformanceTest(sgemm_v5_transpose, data, 20, "Transpose"));
-        results.push_back(runPerformanceTest(sgemm_v6_double_buffer, data, 20, "Double Buffer"));
-        results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, 20, "Bank Conflict"));
-        results.push_back(runPerformanceTest(sgemm_v8_tensor_core, data, 20, "Tensor Core"));
-        results.push_back(runPerformanceTest(sgemm_cublas, data, 20, "cuBLAS"));
-        results.push_back(runPerformanceTest(sgemm_cublas_tensorcore, data, 20, "cuBLAS Tensor Core"));
+        // results.push_back(runPerformanceTest(sgemm_v0_global_memory, data, num_test, "Global Memory"));
+        // results.push_back(runPerformanceTest(sgemm_v1_shared_memory, data, num_test, "Shared Memory"));
+        results.push_back(runPerformanceTest(sgemm_v2_tiling, data, num_test, "Tiling"));
+        results.push_back(runPerformanceTest(sgemm_v3_vectorized, data, num_test, "Vectorized"));
+        results.push_back(runPerformanceTest(sgemm_v4_register, data, num_test, "Register"));
+        results.push_back(runPerformanceTest(sgemm_v5_transpose, data, num_test, "Transpose"));
+        results.push_back(runPerformanceTest(sgemm_v6_double_buffer, data, num_test, "Double Buffer"));
+        results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, num_test, "Bank Conflict"));
+        results.push_back(runPerformanceTest(sgemm_v8_tensor_core, data, num_test, "Tensor Core"));
+        results.push_back(runPerformanceTest(sgemm_v9_tensor_core_bank_conflict, data, num_test, "Tensor Core Bank Conflict"));
+        results.push_back(runPerformanceTest(sgemm_cublas, data, num_test, "cuBLAS"));
+        results.push_back(runPerformanceTest(sgemm_cublas_tensorcore, data, num_test, "cuBLAS Tensor Core"));
         // 打印所有结果
         for (const auto& result : results) {
             printPerformanceResult(result);
@@ -127,8 +131,9 @@ int main() {
         // error_results.push_back(runErrorTest(sgemm_v4_register, data, "Register"));
         // error_results.push_back(runErrorTest(sgemm_v5_transpose, data, "Transpose"));
         // error_results.push_back(runErrorTest(sgemm_v6_double_buffer, data, "Double Buffer"));
-        error_results.push_back(runErrorTest(sgemm_v7_bank_conflict, data, "Bank Conflict"));
-        error_results.push_back(runErrorTest(sgemm_v8_tensor_core, data, "Tensor Core"));
+        // error_results.push_back(runErrorTest(sgemm_v7_bank_conflict, data, "Bank Conflict"));
+        // error_results.push_back(runErrorTest(sgemm_v8_tensor_core, data, "Tensor Core"));
+        error_results.push_back(runErrorTest(sgemm_v9_tensor_core_bank_conflict, data, "Tensor Core Bank Conflict"));
         for (const auto& result : error_results) {
             printErrorResult(result);
         }
