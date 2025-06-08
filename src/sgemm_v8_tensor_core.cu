@@ -13,6 +13,9 @@ constexpr int WMMA_M = 16;
 constexpr int WMMA_N = 16;
 constexpr int WMMA_K = 8;
 
+#define padding_A 4
+#define padding_B 8
+
 // constexpr int Warp_M = 2;
 // constexpr int Warp_N = 4;
 
@@ -40,8 +43,8 @@ __global__ void sgemm_tensor_core_kernel(
     const int warp_id = (ty * BLOCK_SIZE + tx) / 32;
     // const int lane_id = (tx * BLOCK_SIZE + ty) % 32;
 
-    __shared__ float A_shared[2][BM][BK + 4];
-    __shared__ float B_shared[2][BK][BN + 4];
+    __shared__ float A_shared[2][BM][BK + padding_A];
+    __shared__ float B_shared[2][BK][BN + padding_B];
     
     // float sum[TM][TN] = {0.0f};
     
@@ -85,12 +88,12 @@ __global__ void sgemm_tensor_core_kernel(
     #pragma unroll
     for (int s = BK; s < K; s += BK) {
 
-        wmma::load_matrix_sync(b_frag, &B_shared[choice][0][warp_id * 16], BN + 4);
+        wmma::load_matrix_sync(b_frag, &B_shared[choice][0][warp_id * 16], BN + padding_B);
 
         #pragma unroll
         for (int i = 0; i < 8; i++) {
 
-            wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * i][0], BK + 4);
+            wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * i][0], BK + padding_A);
 
             wmma::mma_sync(c_frag[i], a_frag, b_frag, c_frag[i]);
         }
@@ -108,12 +111,12 @@ __global__ void sgemm_tensor_core_kernel(
 
     {
 
-        wmma::load_matrix_sync(b_frag, &B_shared[choice][0][warp_id * 16], BN + 4);
+        wmma::load_matrix_sync(b_frag, &B_shared[choice][0][warp_id * 16], BN + padding_B);
 
         #pragma unroll
         for (int i = 0; i < 8; i++) {
 
-            wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * i][0], BK + 4);
+            wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * i][0], BK + padding_A);
 
             wmma::mma_sync(c_frag[i], a_frag, b_frag, c_frag[i]);
         }
