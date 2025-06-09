@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // 声明要测试的函数
-void sgemm_v10_tensor_core_vectorized(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v11_tensor_core_cp_async(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 int main() {
     printf("=== Starting CUDA SGEMM Test ===\n");
@@ -49,7 +49,7 @@ int main() {
     
     printf("About to launch SGEMM kernel...\n");
     // 运行SGEMM
-    sgemm_v10_tensor_core_vectorized(d_C, d_A, d_B, dims);
+    sgemm_v11_tensor_core_cp_async(d_C, d_A, d_B, dims);
     
     // 检查错误
     cudaError_t error = cudaGetLastError();

@@ -78,9 +78,9 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
     const float *B_start = B + blockIdx.x * BN;
     
     
-    wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, nvcuda::wmma::precision::tf32, wmma::row_major> a_frag;
+    wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, nvcuda::wmma::precision::tf32, wmma::row_major> a_frag[2][8];
 
-    wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, nvcuda::wmma::precision::tf32, wmma::row_major> b_frag;
+    wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, nvcuda::wmma::precision::tf32, wmma::row_major> b_frag[2];
     
     wmma::fragment<wmma::accumulator, WMMA_M, WMMA_N, WMMA_K, float> c_frag[8];
 
@@ -116,7 +116,6 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
     #pragma unroll
     for (int s = BK; s < K; s += BK) {
 
-        #pragma unroll
         for (int i = 0; i < 2; i++) {
             
             uint32_t smem_ptr_A = __cvta_generic_to_shared(&A_shared[choice][warp_id * 16 + i * 8 + ty_A][tx_A * 4]);
@@ -135,14 +134,26 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
         #pragma unroll
         for (int i = 0; i < 2; i++) {
 
-            wmma::load_matrix_sync(b_frag, &B_shared[choice][8 * i][warp_id * 16], BN + padding_B);
-
             #pragma unroll
             for (int j = 0; j < 8; j++) {
 
-                wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * j][8 * i], BK + padding_A);
+                wmma::load_matrix_sync(a_frag[i][j], &A_shared[choice][16 * j][8 * i], BK + padding_A);
+            }
+        }
+        #pragma unroll
+        for (int i = 0; i < 2; i++) {
 
-                wmma::mma_sync(c_frag[j], a_frag, b_frag, c_frag[j]);
+            wmma::load_matrix_sync(b_frag[i], &B_shared[choice][8 * i][warp_id * 16], BN + padding_B);
+        
+        }
+
+
+        #pragma unroll
+        for (int i = 0; i < 2; i++) {
+            #pragma unroll
+            for (int j = 0; j < 8; j++) {
+
+                wmma::mma_sync(c_frag[j], a_frag[i][j], b_frag[i], c_frag[j]);
             }
         }
            
@@ -158,14 +169,26 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
         #pragma unroll
         for (int i = 0; i < 2; i++) {
 
-            wmma::load_matrix_sync(b_frag, &B_shared[choice][8 * i][warp_id * 16], BN + padding_B);
-
             #pragma unroll
             for (int j = 0; j < 8; j++) {
 
-                wmma::load_matrix_sync(a_frag, &A_shared[choice][16 * j][8 * i], BK + padding_A);
+                wmma::load_matrix_sync(a_frag[i][j], &A_shared[choice][16 * j][8 * i], BK + padding_A);
+            }
+        }
+        #pragma unroll
+        for (int i = 0; i < 2; i++) {
 
-                wmma::mma_sync(c_frag[j], a_frag, b_frag, c_frag[j]);
+            wmma::load_matrix_sync(b_frag[i], &B_shared[choice][8 * i][warp_id * 16], BN + padding_B);
+        
+        }
+
+
+        #pragma unroll
+        for (int i = 0; i < 2; i++) {
+            #pragma unroll
+            for (int j = 0; j < 8; j++) {
+
+                wmma::mma_sync(c_frag[j], a_frag[i][j], b_frag[i], c_frag[j]);
             }
         }
             

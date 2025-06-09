@@ -15,6 +15,11 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -arch=sm_86 -lineinfo")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif()
+
 # 设置调试标志
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -G -g -O0 -lineinfo")
@@ -38,6 +43,7 @@ set(SOURCES
     src/sgemm_v8_tensor_core.cu
     src/sgemm_v9_tensor_core_bank_conflict.cu
     src/sgemm_v10_tensor_core_vectorized.cu
+    src/sgemm_v11_tensor_core_cp_async.cu
     src/tensor_core.cu
     src/sgemm_cublas.cu
     src/sgemm_cublas_tensor_core.cu
@@ -48,7 +54,7 @@ set(SOURCES
 add_executable(sgemm_benchmark ${SOURCES})
 
 # 创建测试程序
-add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v10_tensor_core_vectorized.cu)
+add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v11_tensor_core_cp_async.cu)
 
 # 链接CUDA库
 target_link_libraries(sgemm_benchmark cublas cudart)
