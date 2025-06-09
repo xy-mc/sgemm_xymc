@@ -117,7 +117,7 @@ int main() {
         results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, num_test, "Bank Conflict"));
         // results.push_back(runPerformanceTest(sgemm_v8_tensor_core, data, num_test, "Tensor Core"));
         // results.push_back(runPerformanceTest(sgemm_v9_tensor_core_bank_conflict, data, num_test, "Tensor Core Bank Conflict"));
-        // results.push_back(runPerformanceTest(sgemm_v10_tensor_core_vectorized, data, num_test, "Tensor Core Vectorized"));
+        results.push_back(runPerformanceTest(sgemm_v10_tensor_core_vectorized, data, num_test, "Tensor Core Vectorized"));
         results.push_back(runPerformanceTest(sgemm_v11_tensor_core_cp_async, data, num_test, "Tensor Core cp.async"));
         // results.push_back(runPerformanceTest(sgemm_tensor_example, data, num_test, "Tensor Core Example"));
         results.push_back(runPerformanceTest(sgemm_cublas, data, num_test, "cuBLAS"));

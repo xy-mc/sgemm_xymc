@@ -140,6 +140,7 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
                 wmma::load_matrix_sync(a_frag[i][j], &A_shared[choice][16 * j][8 * i], BK + padding_A);
             }
         }
+
         #pragma unroll
         for (int i = 0; i < 2; i++) {
 
@@ -175,6 +176,7 @@ __global__ void sgemm_tensor_core_vectorized_kernel(
                 wmma::load_matrix_sync(a_frag[i][j], &A_shared[choice][16 * j][8 * i], BK + padding_A);
             }
         }
+
         #pragma unroll
         for (int i = 0; i < 2; i++) {
 
