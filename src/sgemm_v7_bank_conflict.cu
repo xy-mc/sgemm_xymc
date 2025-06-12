@@ -7,6 +7,9 @@
 #define BLOCK_SIZE 16
 #define TILE_SIZE 4
 
+#define padding_A 0
+#define padding_B 0
+
 // constexpr int STEP = BLOCK_SIZE * TILE_SIZE;
 
 __global__ void sgemm_bank_conflict_kernel(
@@ -28,8 +31,8 @@ __global__ void sgemm_bank_conflict_kernel(
     const int tx = threadIdx.x;
     const int ty = threadIdx.y;
 
-    __shared__ float A_shared[2][BK][BM];
-    __shared__ float B_shared[2][BK][BN];
+    __shared__ float A_shared[2][BK][BM + padding_A];
+    __shared__ float B_shared[2][BK][BN + padding_B];
     
     float sum[TM][TN] = {0.0f};
     
@@ -43,21 +46,21 @@ __global__ void sgemm_bank_conflict_kernel(
     const int sx_n = (ty * BLOCK_SIZE + tx) * 4 % BN;
 
     float global_to_reg_A[4];
-    // float global_to_reg_B[4];
+    float global_to_reg_B[4];
 
     float reg_A[TM];
     float reg_B[TN];
 
     {
         FLOAT4(global_to_reg_A[0]) = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k, K)]);
+        FLOAT4(global_to_reg_B[0]) = CONST_FLOAT4(B_start[OFFSET(sy_n, sx_n, N)]);
 
         A_shared[0][sx_k][sy_k] = global_to_reg_A[0];
         A_shared[0][sx_k + 1][sy_k] = global_to_reg_A[1];
         A_shared[0][sx_k + 2][sy_k] = global_to_reg_A[2];
         A_shared[0][sx_k + 3][sy_k] = global_to_reg_A[3];
 
-        FLOAT4(B_shared[0][sy_n][sx_n])
-                = CONST_FLOAT4(B_start[OFFSET(sy_n, sx_n, N)]);
+        FLOAT4(B_shared[0][sy_n][sx_n]) = FLOAT4(global_to_reg_B[0]);
         
         __syncthreads();
     }
@@ -68,7 +71,8 @@ __global__ void sgemm_bank_conflict_kernel(
     for (int s = BK; s < K; s += BK) {
 
         FLOAT4(global_to_reg_A[0]) = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k + s, K)]);
-            
+        FLOAT4(global_to_reg_B[0]) = CONST_FLOAT4(B_start[OFFSET(sy_n + s, sx_n, N)]);
+
         #pragma unroll
         for (int k = 0; k < BK; k++) {
 
@@ -96,8 +100,7 @@ __global__ void sgemm_bank_conflict_kernel(
         A_shared[choice][sx_k + 2][sy_k] = global_to_reg_A[2];
         A_shared[choice][sx_k + 3][sy_k] = global_to_reg_A[3];
 
-        FLOAT4(B_shared[choice][sy_n][sx_n])
-                = CONST_FLOAT4(B_start[OFFSET(sy_n + s, sx_n, N)]);
+        FLOAT4(B_shared[choice][sy_n][sx_n]) = FLOAT4(global_to_reg_B[0]);
                 
         __syncthreads();
     }

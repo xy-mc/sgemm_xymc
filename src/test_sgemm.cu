@@ -3,13 +3,13 @@
 #include <stdio.h>
 
 // 声明要测试的函数
-void sgemm_v11_tensor_core_cp_async(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v12_tensor_core_mma(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 int main() {
     printf("=== Starting CUDA SGEMM Test ===\n");
     
     // 设置测试矩阵维度
-    MatrixDims dims = {2048, 2048, 2048};
+    MatrixDims dims = {128, 128, 128};
     printf("Matrix dimensions: M=%d, N=%d, K=%d\n", dims.M, dims.N, dims.K);
     
     // 分配主机内存
@@ -21,10 +21,10 @@ int main() {
     // 初始化输入矩阵
     printf("Initializing input matrices...\n");
     for (int i = 0; i < dims.M * dims.K; i++) {
-        h_A[i] = 1.0f;
+        h_A[i] = (float&)i;
     }
     for (int i = 0; i < dims.K * dims.N; i++) {
-        h_B[i] = 1.0f;
+        h_B[i] = (float&)i;
     }
     for (int i = 0; i < dims.M * dims.N; i++) {
         h_C[i] = 0.0f;
@@ -49,7 +49,7 @@ int main() {
     
     printf("About to launch SGEMM kernel...\n");
     // 运行SGEMM
-    sgemm_v11_tensor_core_cp_async(d_C, d_A, d_B, dims);
+    sgemm_v12_tensor_core_mma(d_C, d_A, d_B, dims);
     
     // 检查错误
     cudaError_t error = cudaGetLastError();

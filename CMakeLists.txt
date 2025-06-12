@@ -44,6 +44,7 @@ set(SOURCES
     src/sgemm_v9_tensor_core_bank_conflict.cu
     src/sgemm_v10_tensor_core_vectorized.cu
     src/sgemm_v11_tensor_core_cp_async.cu
+    src/sgemm_v12_tensor_core_mma.cu
     src/tensor_core.cu
     src/sgemm_cublas.cu
     src/sgemm_cublas_tensor_core.cu
@@ -54,7 +55,7 @@ set(SOURCES
 add_executable(sgemm_benchmark ${SOURCES})
 
 # 创建测试程序
-add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v11_tensor_core_cp_async.cu)
+add_executable(test_sgemm src/test_sgemm.cu src/sgemm_v12_tensor_core_mma.cu)
 
 # 链接CUDA库
 target_link_libraries(sgemm_benchmark cublas cudart)

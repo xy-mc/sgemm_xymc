@@ -18,6 +18,7 @@ void sgemm_v8_tensor_core(float* C, const float* A, const float* B, const Matrix
 void sgemm_v9_tensor_core_bank_conflict(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v10_tensor_core_vectorized(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v11_tensor_core_cp_async(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v12_tensor_core_mma(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 void sgemm_tensor_example(float* C, const float* A, const float* B, const MatrixDims& dims);
 
@@ -86,8 +87,8 @@ int main() {
     std::vector<MatrixDims> test_cases = {
         // {128, 128, 128},
         // {1024, 1024, 1024},
-        {2048, 2048, 2048},
-        // {4096, 4096, 4096},
+        // {2048, 2048, 2048},
+        {4096, 4096, 4096},
         // {8192, 8192, 8192},
         // {16384, 16384, 16384}
     };
@@ -114,13 +115,14 @@ int main() {
         // results.push_back(runPerformanceTest(sgemm_v4_register, data, num_test, "Register"));
         // results.push_back(runPerformanceTest(sgemm_v5_transpose, data, num_test, "Transpose"));
         // results.push_back(runPerformanceTest(sgemm_v6_double_buffer, data, num_test, "Double Buffer"));
-        results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, num_test, "Bank Conflict"));
+        // results.push_back(runPerformanceTest(sgemm_v7_bank_conflict, data, num_test, "Bank Conflict"));
         // results.push_back(runPerformanceTest(sgemm_v8_tensor_core, data, num_test, "Tensor Core"));
         // results.push_back(runPerformanceTest(sgemm_v9_tensor_core_bank_conflict, data, num_test, "Tensor Core Bank Conflict"));
-        results.push_back(runPerformanceTest(sgemm_v10_tensor_core_vectorized, data, num_test, "Tensor Core Vectorized"));
+        // results.push_back(runPerformanceTest(sgemm_v10_tensor_core_vectorized, data, num_test, "Tensor Core Vectorized"));
         results.push_back(runPerformanceTest(sgemm_v11_tensor_core_cp_async, data, num_test, "Tensor Core cp.async"));
+        results.push_back(runPerformanceTest(sgemm_v12_tensor_core_mma, data, num_test, "Tensor Core mma"));
         // results.push_back(runPerformanceTest(sgemm_tensor_example, data, num_test, "Tensor Core Example"));
-        results.push_back(runPerformanceTest(sgemm_cublas, data, num_test, "cuBLAS"));
+        // results.push_back(runPerformanceTest(sgemm_cublas, data, num_test, "cuBLAS"));
         results.push_back(runPerformanceTest(sgemm_cublas_tensorcore, data, num_test, "cuBLAS Tensor Core"));
         // 打印所有结果
         for (const auto& result : results) {
@@ -144,6 +146,7 @@ int main() {
         // error_results.push_back(runErrorTest(sgemm_v9_tensor_core_bank_conflict, data, "Tensor Core Bank Conflict"));
         // error_results.push_back(runErrorTest(sgemm_v10_tensor_core_vectorized, data, "Tensor Core Vectorized"));
         // error_results.push_back(runErrorTest(sgemm_v11_tensor_core_cp_async, data, "Tensor Core cp.async"));
+        // error_results.push_back(runErrorTest(sgemm_v12_tensor_core_mma, data, "Tensor Core mma"));
         for (const auto& result : error_results) {
             printErrorResult(result);
         }
