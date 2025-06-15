@@ -19,6 +19,7 @@ void sgemm_v9_tensor_core_bank_conflict(float* C, const float* A, const float* B
 void sgemm_v10_tensor_core_vectorized(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v11_tensor_core_cp_async(float* C, const float* A, const float* B, const MatrixDims& dims);
 void sgemm_v12_tensor_core_mma(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v13_tensor_core_mma_swizzle(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 void sgemm_tensor_example(float* C, const float* A, const float* B, const MatrixDims& dims);
 
@@ -89,7 +90,7 @@ int main() {
         // {1024, 1024, 1024},
         // {2048, 2048, 2048},
         {4096, 4096, 4096},
-        // {8192, 8192, 8192},
+        {8192, 8192, 8192},
         // {16384, 16384, 16384}
     };
 
@@ -121,6 +122,7 @@ int main() {
         // results.push_back(runPerformanceTest(sgemm_v10_tensor_core_vectorized, data, num_test, "Tensor Core Vectorized"));
         results.push_back(runPerformanceTest(sgemm_v11_tensor_core_cp_async, data, num_test, "Tensor Core cp.async"));
         results.push_back(runPerformanceTest(sgemm_v12_tensor_core_mma, data, num_test, "Tensor Core mma"));
+        results.push_back(runPerformanceTest(sgemm_v13_tensor_core_mma_swizzle, data, num_test, "Tensor Core mma swizzle"));
         // results.push_back(runPerformanceTest(sgemm_tensor_example, data, num_test, "Tensor Core Example"));
         // results.push_back(runPerformanceTest(sgemm_cublas, data, num_test, "cuBLAS"));
         results.push_back(runPerformanceTest(sgemm_cublas_tensorcore, data, num_test, "cuBLAS Tensor Core"));
@@ -147,6 +149,7 @@ int main() {
         // error_results.push_back(runErrorTest(sgemm_v10_tensor_core_vectorized, data, "Tensor Core Vectorized"));
         // error_results.push_back(runErrorTest(sgemm_v11_tensor_core_cp_async, data, "Tensor Core cp.async"));
         // error_results.push_back(runErrorTest(sgemm_v12_tensor_core_mma, data, "Tensor Core mma"));
+        // error_results.push_back(runErrorTest(sgemm_v13_tensor_core_mma_swizzle, data, "Tensor Core mma swizzle"));
         for (const auto& result : error_results) {
             printErrorResult(result);
         }

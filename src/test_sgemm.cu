@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // 声明要测试的函数
-void sgemm_v12_tensor_core_mma(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v13_tensor_core_mma_swizzle(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 int main() {
     printf("=== Starting CUDA SGEMM Test ===\n");
@@ -49,7 +49,7 @@ int main() {
     
     printf("About to launch SGEMM kernel...\n");
     // 运行SGEMM
-    sgemm_v12_tensor_core_mma(d_C, d_A, d_B, dims);
+    sgemm_v13_tensor_core_mma_swizzle(d_C, d_A, d_B, dims);
     
     // 检查错误
     cudaError_t error = cudaGetLastError();
