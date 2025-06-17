@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // 声明要测试的函数
-void sgemm_v1_shared_memory(float* C, const float* A, const float* B, const MatrixDims& dims);
+void sgemm_v7_1_bank_conflict_finished(float* C, const float* A, const float* B, const MatrixDims& dims);
 
 int main() {
     printf("=== Starting CUDA SGEMM Test ===\n");
@@ -21,10 +21,10 @@ int main() {
     // 初始化输入矩阵
     printf("Initializing input matrices...\n");
     for (int i = 0; i < dims.M * dims.K; i++) {
-        h_A[i] = 1.0f;
+        h_A[i] = i;
     }
     for (int i = 0; i < dims.K * dims.N; i++) {
-        h_B[i] = 1.0f;
+        h_B[i] = i;
     }
     for (int i = 0; i < dims.M * dims.N; i++) {
         h_C[i] = 0.0f;
@@ -49,7 +49,7 @@ int main() {
     
     printf("About to launch SGEMM kernel...\n");
     // 运行SGEMM
-    sgemm_v1_shared_memory(d_C, d_A, d_B, dims);
+    sgemm_v7_1_bank_conflict_finished(d_C, d_A, d_B, dims);
     
     // 检查错误
     cudaError_t error = cudaGetLastError();
@@ -81,7 +81,16 @@ int main() {
     if (correct) {
         printf("Test passed!\n");
     }
-    
+
+    // 输出所有结果值（按行）
+    printf("\nMatrix C values (row-major):\n");
+    for (int i = 0; i < dims.M; ++i) {
+        for (int j = 0; j < dims.N; ++j) {
+            printf("%6.1f ", h_C[i * dims.N + j]);
+        }
+        printf("\n");
+    }
+
     // 清理
     printf("Cleaning up...\n");
     cudaFree(d_A);

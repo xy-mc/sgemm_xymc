@@ -10,9 +10,14 @@
 #define padding_A 0
 #define padding_B 0
 
+static __device__ 
+uint32_t swizzle_A(uint32_t y, uint32_t x) {
+    x >>= 2;
+    return ((1 & x) << 4) ^ y;
+}
 // constexpr int STEP = BLOCK_SIZE * TILE_SIZE;
 
-__global__ void sgemm_bank_conflict_kernel(
+__global__ void sgemm_v7_1_bank_conflict_finished_kernel(
     float* C,
     const float* A,
     const float* B,
@@ -55,10 +60,12 @@ __global__ void sgemm_bank_conflict_kernel(
         FLOAT4(global_to_reg_A[0]) = CONST_FLOAT4(A_start[OFFSET(sy_k, sx_k, K)]);
         FLOAT4(global_to_reg_B[0]) = CONST_FLOAT4(B_start[OFFSET(sy_n, sx_n, N)]);
 
-        A_shared[0][sx_k][sy_k] = global_to_reg_A[0];
-        A_shared[0][sx_k + 1][sy_k] = global_to_reg_A[1];
-        A_shared[0][sx_k + 2][sy_k] = global_to_reg_A[2];
-        A_shared[0][sx_k + 3][sy_k] = global_to_reg_A[3];
+        int swizzled_sy_k = swizzle_A(sy_k, sx_k);
+
+        A_shared[0][sx_k][swizzled_sy_k] = global_to_reg_A[0];
+        A_shared[0][sx_k + 1][swizzled_sy_k] = global_to_reg_A[1];
+        A_shared[0][sx_k + 2][swizzled_sy_k] = global_to_reg_A[2];
+        A_shared[0][sx_k + 3][swizzled_sy_k] = global_to_reg_A[3];
 
         FLOAT4(B_shared[0][sy_n][sx_n]) = FLOAT4(global_to_reg_B[0]);
         
@@ -76,8 +83,8 @@ __global__ void sgemm_bank_conflict_kernel(
         #pragma unroll
         for (int k = 0; k < BK; k++) {
 
-            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][ty * TM / 2]);
-            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][ty * TM / 2 + BM / 2]);
+            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][swizzle_A(ty * TM / 2, k)]);
+            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][swizzle_A(ty * TM / 2 + BM / 2, k)]);
 
             FLOAT4(reg_B[0]) = FLOAT4(B_shared[choice][k][tx * TN / 2]);
             FLOAT4(reg_B[4]) = FLOAT4(B_shared[choice][k][tx * TN / 2 + BN / 2]);
@@ -95,10 +102,12 @@ __global__ void sgemm_bank_conflict_kernel(
 
         choice ^= 1;
 
-        A_shared[choice][sx_k][sy_k] = global_to_reg_A[0];
-        A_shared[choice][sx_k + 1][sy_k] = global_to_reg_A[1];
-        A_shared[choice][sx_k + 2][sy_k] = global_to_reg_A[2];
-        A_shared[choice][sx_k + 3][sy_k] = global_to_reg_A[3];
+        int swizzled_sy_k = swizzle_A(sy_k, sx_k);
+
+        A_shared[choice][sx_k][swizzled_sy_k] = global_to_reg_A[0];
+        A_shared[choice][sx_k + 1][swizzled_sy_k] = global_to_reg_A[1];
+        A_shared[choice][sx_k + 2][swizzled_sy_k] = global_to_reg_A[2];
+        A_shared[choice][sx_k + 3][swizzled_sy_k] = global_to_reg_A[3];
 
         FLOAT4(B_shared[choice][sy_n][sx_n]) = FLOAT4(global_to_reg_B[0]);
                 
@@ -109,8 +118,8 @@ __global__ void sgemm_bank_conflict_kernel(
         #pragma unroll
         for (int k = 0; k < BK; k++) {
 
-            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][ty * TM / 2]);
-            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][ty * TM / 2 + BM / 2]);
+            FLOAT4(reg_A[0]) = FLOAT4(A_shared[choice][k][swizzle_A(ty * TM / 2, k)]);
+            FLOAT4(reg_A[4]) = FLOAT4(A_shared[choice][k][swizzle_A(ty * TM / 2 + BM / 2, k)]);
 
             FLOAT4(reg_B[0]) = FLOAT4(B_shared[choice][k][tx * TN / 2]);
             FLOAT4(reg_B[4]) = FLOAT4(B_shared[choice][k][tx * TN / 2 + BN / 2]);
@@ -148,7 +157,7 @@ __global__ void sgemm_bank_conflict_kernel(
     
 }
 
-void sgemm_v7_bank_conflict(float* C, const float* A, const float* B, const MatrixDims& dims) {
+void sgemm_v7_1_bank_conflict_finished(float* C, const float* A, const float* B, const MatrixDims& dims) {
     
     dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE);
 
@@ -157,7 +166,7 @@ void sgemm_v7_bank_conflict(float* C, const float* A, const float* B, const Matr
         (dims.M + blockDim.y - 1) / blockDim.y / 8
     );
     
-    sgemm_bank_conflict_kernel<<<gridDim, blockDim>>>(C, A, B, dims.M, dims.N, dims.K);
+    sgemm_v7_1_bank_conflict_finished_kernel<<<gridDim, blockDim>>>(C, A, B, dims.M, dims.N, dims.K);
     
     cudaError_t error = cudaGetLastError(); 
     if (error != cudaSuccess) {
