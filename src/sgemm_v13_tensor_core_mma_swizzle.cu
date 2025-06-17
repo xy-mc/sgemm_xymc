@@ -16,16 +16,16 @@ using namespace nvcuda;
 constexpr int Warp_M = 4;
 constexpr int Warp_N = 4;
 
-__device__ uint32_t swizzle_A(uint32_t y, uint32_t x) {
+static __device__ inline
+uint32_t swizzle_A(uint32_t y, uint32_t x) {
     x >>= 2;
     return (((y & 7) >> 2) ^ x) << 2;
 }
 
-__device__ uint32_t swizzle_B(uint32_t y, uint32_t x) {
+static __device__ inline
+uint32_t swizzle_B(uint32_t y, uint32_t x) {
     x >>= 3;
-
-    uint32_t ans = ((y & 3) ^ x) << 3;
-    return ans;
+    return ((y & 3) ^ x) << 3;
 }
 // constexpr int STEP = BLOCK_SIZE * TILE_SIZE;
 
@@ -84,11 +84,11 @@ __global__ void sgemm_tensor_core_mma_swizzle_kernel(
     {
         uint32_t smem_ptr_A = __cvta_generic_to_shared(&A_shared[0][sy_k][swizzle_A(sy_k, sx_k)]);
 
-        uint32_t smem_ptr_B = __cvta_generic_to_shared(&B_shared[0][sy_n][sx_n]);
+        uint32_t smem_ptr_B = __cvta_generic_to_shared(&B_shared[0][sy_n][swizzle_B(sy_n, sx_n) + (sx_n % 8)]);
 
         CP_ASYNC_CG(smem_ptr_A, &A_start[OFFSET(sy_k, sx_k, K)], 16);
 
-        CP_ASYNC_CG(smem_ptr_B, &B_start[OFFSET(sy_n, swizzle_B(sy_n, sx_n) + (sx_n % 8), N)], 16);
+        CP_ASYNC_CG(smem_ptr_B, &B_start[OFFSET(sy_n, sx_n, N)], 16);
 
         CP_ASYNC_COMMIT_GROUP();
 
@@ -104,11 +104,11 @@ __global__ void sgemm_tensor_core_mma_swizzle_kernel(
 
         uint32_t smem_ptr_A = __cvta_generic_to_shared(&A_shared[choice][sy_k][swizzle_A(sy_k, sx_k)]);
 
-        uint32_t smem_ptr_B = __cvta_generic_to_shared(&B_shared[choice][sy_n][sx_n]);
+        uint32_t smem_ptr_B = __cvta_generic_to_shared(&B_shared[choice][sy_n][swizzle_B(sy_n, sx_n) + (sx_n % 8)]);
 
-        CP_ASYNC_CA(smem_ptr_A, &A_start[OFFSET(sy_k, sx_k + s, K)], 16);
+        CP_ASYNC_CG(smem_ptr_A, &A_start[OFFSET(sy_k, sx_k + s, K)], 16);
 
-        CP_ASYNC_CA(smem_ptr_B, &B_start[OFFSET(sy_n + s, swizzle_B(sy_n, sx_n) + (sx_n % 8), N)], 16);
+        CP_ASYNC_CG(smem_ptr_B, &B_start[OFFSET(sy_n + s, sx_n, N)], 16);
 
         CP_ASYNC_COMMIT_GROUP();
 
@@ -243,9 +243,11 @@ __global__ void sgemm_tensor_core_mma_swizzle_kernel(
             // uint32_t reg_global = __cvta_generic_to_global(&C_start[OFFSET(16 * i + lane_id / 4, 8 * j + lane_id % 4, N)]);
 
             // STMATRIX_X4(reg_global, RC[i][j][0], RC[i][j][1], RC[i][j][2], RC[i][j][3]);
-            LDST64BITS(C_start[OFFSET(16 * i + lane_id / 4, 8 * j + (lane_id % 4) * 2, N)]) = LDST64BITS(RC[i][j][0]);
+            LDST64BITS(C_start[OFFSET(16 * i + lane_id / 4, 8 * j + (lane_id % 4) * 2, N)]) 
+                        = LDST64BITS(RC[i][j][0]);
 
-            LDST64BITS(C_start[OFFSET(16 * i + lane_id / 4 + 8, 8 * j + (lane_id % 4) * 2, N)]) = LDST64BITS(RC[i][j][2]);
+            LDST64BITS(C_start[OFFSET(16 * i + lane_id / 4 + 8, 8 * j + (lane_id % 4) * 2, N)]) 
+                        = LDST64BITS(RC[i][j][2]);
 
             // LDST128BITS(C_start[OFFSET(16 * i + lane_id / 2, 8 * j + (lane_id % 2) * 4, N)]) = LDST128BITS(RC[i][j][0]);
 
